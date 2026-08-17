@@ -60,3 +60,52 @@ export const exportToPDFPrint = (title: string, elementId?: string) => {
   }
   window.print();
 };
+
+export const exportSystemJSONBackup = () => {
+  const backupData: Record<string, any> = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('aichainz_')) {
+      try {
+        backupData[key] = JSON.parse(localStorage.getItem(key) || 'null');
+      } catch {
+        backupData[key] = localStorage.getItem(key);
+      }
+    }
+  }
+
+  const jsonStr = JSON.stringify(backupData, null, 2);
+  const blob = new Blob([jsonStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Aichainz_Full_Data_Backup_${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+export const importSystemJSONBackup = (file: File, onSuccess: () => void, onError: (err: string) => void) => {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const content = e.target?.result as string;
+      const data = JSON.parse(content);
+      if (typeof data === 'object' && data !== null) {
+        Object.keys(data).forEach(key => {
+          if (key.startsWith('aichainz_')) {
+            const val = typeof data[key] === 'string' ? data[key] : JSON.stringify(data[key]);
+            localStorage.setItem(key, val);
+          }
+        });
+        onSuccess();
+      } else {
+        onError('Invalid backup file structure.');
+      }
+    } catch (err: any) {
+      onError('Failed to parse backup JSON file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+};

@@ -45,8 +45,11 @@ import {
   FolderOpen,
   CreditCard,
   Crown,
-  Lock
+  Lock,
+  Download,
+  Upload
 } from 'lucide-react';
+import { exportSystemJSONBackup, importSystemJSONBackup } from './utils/exportUtils';
 
 interface MainLayoutProps { session: AuthSession; onLogout: () => void; }
 
@@ -211,11 +214,50 @@ const MainLayout: React.FC<MainLayoutProps> = ({ session, onLogout }) => {
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <div className="px-3.5 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-extrabold text-slate-800 shadow-2xs flex items-center gap-2">
               <Globe className="w-4 h-4 text-emerald-600" />
-              <span>Multi-Office: India / UAE / Rwanda</span>
+              <span className="hidden lg:inline">Multi-Office: India / UAE / Rwanda</span>
+              <span className="lg:hidden">IND/UAE/RWA</span>
             </div>
+
+            {/* Save & Download Backup Button */}
+            <button
+              onClick={() => exportSystemJSONBackup()}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-extrabold transition shadow-2xs"
+              title="Download 100% full JSON backup of all application data"
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="hidden md:inline">Save Backup</span>
+            </button>
+
+            {/* Restore Backup Button */}
+            <label
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-300 text-blue-800 rounded-xl text-xs font-extrabold transition shadow-2xs cursor-pointer"
+              title="Upload & Restore full JSON backup file"
+            >
+              <Upload className="w-3.5 h-3.5 text-blue-600" />
+              <span className="hidden md:inline">Restore Backup</span>
+              <input
+                type="file"
+                accept=".json"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    importSystemJSONBackup(
+                      file,
+                      () => {
+                        alert('✅ Application Backup Restored Successfully! Refreshing application state...');
+                        window.location.reload();
+                      },
+                      (err) => alert('❌ Error restoring backup: ' + err)
+                    );
+                  }
+                }}
+              />
+            </label>
+
             {/* User Info Badge */}
             <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 border border-indigo-200 rounded-xl text-xs font-bold text-indigo-800">
               <UserCircle className="w-4 h-4 text-indigo-600" />
